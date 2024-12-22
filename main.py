@@ -1,115 +1,35 @@
 import streamlit as st
 from stegano import lsb
-import stegano
 from PIL import Image
 from cryptography.fernet import Fernet
+import io
 
+# Initialize session state variables
+if 'secret_image' not in st.session_state:
+    st.session_state['secret_image'] = None
+if 'encryption_key' not in st.session_state:
+    st.session_state['encryption_key'] = ""
 
-def encode_text():
-    if option == "Encode":
-        st.subheader('Encode')
+def load_image(image_file):
+    try:
+        return Image.open(image_file)
+    except Exception as e:
+        st.error("Error loading image: Please ensure the file is an image.")
+        return None
 
-        uploaded_image = st.file_uploader("Choose an image to encode text:", type=["jpg", "png", "jpeg"])
-        text_to_hide = st.text_input("Enter the text you want to hide:")
-        encrypt_text = st.checkbox("Encrypt text before hiding?")
+def clear_state():
+    st.session_state['secret_image'] = None
+    st.session_state['encryption_key'] = ""
+    
+def save_image(image):
+    img_byte_arr = io.BytesIO()
+    image.save(img_byte_arr, format='PNG')
+    img_byte_arr = img_byte_arr.getvalue()
+    return img_byte_arr
 
-
-        if st.button('Hide Text in Image'):
-            if uploaded_image is not None and text_to_hide != "":
-
-                # Encryption
-                if encrypt_text:
-                    # Generate a key for encryption
-                    key = generate_key()
-                    encrypted_text = encrypt_message(text_to_hide, key)
-                    encoded_text = encrypted_text.decode('utf-8')
-                    message_to_hide = f"{encoded_text}"
-                else:
-                    message_to_hide = text_to_hide
-                
-                image = Image.open(uploaded_image)
-                
-                # Saving it temporarily to perform operation.
-                temp_path = "temp_image.png"
-                image.save(temp_path)
-                
-                secret = lsb.hide(temp_path, message_to_hide)
-                
-                # Saving the image
-                secret_image_path = "secret_image.png"
-                secret.save(secret_image_path)
-                
-                # Showing the image
-                st.image(secret_image_path, caption='Image with Hidden Text', use_column_width=True)
-                
-                # Download link to download the image
-                with open(secret_image_path, "rb") as file:
-                    st.download_button(label="Download Image with Hidden Text",
-                                    data=file,
-                                    file_name="secret_image.png",
-                                    mime="image/png")
-                    
-                if encrypt_text:
-                    st.success("Text encrypted and hidden in image. Make sure to save the key safely!")
-                    st.text_area("Encryption Key (keep this safe!):", key.decode('utf-8'), height=100)
-
-            else:
-                st.error("Please upload an image and enter some text to hide.")
-
-
-
-def decode_text():
-    if option == "Decode":
-        st.subheader('Decode')
-
-        uploaded_secret_image = st.file_uploader("Choose an image with hidden text:", type=["jpg", "png", "jpeg"])
-        decrypt_text = st.checkbox("Decrypt text after revealing?")
-
-        if decrypt_text:
-            key_input = st.text_area("Enter the encryption key:")
-
-        if uploaded_secret_image is not None:
-            # Opening the uploaded image
-            secret_image = Image.open(uploaded_secret_image)
-
-                
-            # To decode and decrypt the info
-            try:
-                revealed_text = lsb.reveal(secret_image)
-
-                if decrypt_text and key_input:
-                    try:
-                        key = key_input.encode('utf-8')
-                        decrypted_text = decrypt_message(revealed_text.encode('utf-8'), key)
-                        st.subheader("Decoded and Decrypted Text:")
-                        st.write(decrypted_text)
-                    except Exception as e:
-                        st.error("Failed to decrypt. Ensure the key is correct.")
-                else:
-                    st.subheader("Decoded Text:")
-                    st.write(revealed_text)
-
-        
-            except Exception as e:
-                st.error("Failed to decode any text. Ensure the image has hidden text.")
-
-def reset_page():
-    st.session_state.page = "Encode"  
-
-if 'page' not in st.session_state:
-    st.session_state.page = 'Encode'
-
-st.title('Stealthify - Steganographer Tool')
-
-st.sidebar.markdown('---')
-
-
-st.sidebar.title('Dashboard Options')
-
-option = st.sidebar.radio("Choose an action:", ("Encode", "Decode"),index=0, on_change=reset_page)
-
-st.sidebar.markdown('---')
-
+def display_image(image_data, caption="Image"):
+    if image_data:
+        st.image(image_data, caption=caption, use_column_width=True)
 
 def generate_key():
     return Fernet.generate_key()
@@ -121,8 +41,91 @@ def encrypt_message(message, key):
 
 def decrypt_message(encrypted_message, key):
     f = Fernet(key)
-    decrypted_message = f.decrypt(encrypted_message).decode()
-    return decrypted_message
+    try:
+        decrypted_message = f.decrypt(encrypted_message).decode()
+        return decrypted_message
+    except Exception as e:
+        st.error("Failed to decrypt. Ensure the key is correct and the message was encrypted.")
+        return None
+
+def encode_text():
+    st.subheader('Encode')
+    uploaded_image = st.file_uploader("Choose an image to encode text:", type=["jpg", "png", "jpeg"])
+    text_to_hide = st.text_input("Enter the text you want to hide:")
+    encrypt_text = st.checkbox("Encrypt text before hiding?")
+
+    if st.button('Hide Text in Image'):
+        if uploaded_image and text_to_hide:
+            image = load_image(uploaded_image)
+            if image:
+                if encrypt_text:
+                    key = generate_key()
+                    encrypted_text = encrypt_message(text_to_hide, key)
+                    text_to_hide = encrypted_text.decode('utf-8')
+                    st.session_state['encryption_key'] = key.decode('utf-8')
+                secret = lsb.hide(image, text_to_hide)
+                st.session_state['secret_image'] = save_image(secret)
+                display_image(st.session_state['secret_image'], 'Image with Hidden Text')
+                st.download_button("Download Image", st.session_state['secret_image'], file_name="secret_image.png")
+                if encrypt_text:
+                    st.success("Text encrypted and hidden in image.")
+                    st.text_area("Encryption Key (keep this safe!):", st.session_state['encryption_key'], height=100, key="encryption_key_display")
+        else:
+            st.error("Please upload an image and enter some text to hide.")
+    else:
+        # Re-display the image and key if they are in session state
+        if st.session_state.secret_image:
+            display_image(st.session_state.secret_image, 'Image with Hidden Text')
+            st.download_button("Download Image", st.session_state['secret_image'], file_name="secret_image.png")
+            
+            if encrypt_text:
+                st.text_area("Encryption Key (keep this safe!):", st.session_state['encryption_key'], height=100, key="encryption_key_redisplay")
+
+def decode_text():
+    st.subheader('Decode')
+    uploaded_secret_image = st.file_uploader("Choose an image with hidden text:", type=["jpg", "png", "jpeg"])
+    decrypt_text = st.checkbox("Decrypt text after revealing?")
+    key_input = st.text_area("Enter the encryption key:", value="", key="decode_key_input") if decrypt_text else None
+
+    if st.button('Reveal Text'):
+        if uploaded_secret_image is None:
+            st.error("Please upload an image containing hidden text.")
+            return
+
+        secret_image = load_image(uploaded_secret_image)
+        if secret_image is None:
+            st.error("Invalid image format.")
+            return
+
+        revealed_text = lsb.reveal(secret_image)
+        if not revealed_text:
+            st.error("No hidden text found in the image.")
+            return
+
+        if decrypt_text:
+            if not key_input:
+                st.error("Please enter an encryption key to decrypt the text.")
+                return
+
+            try:
+                key_bytes = key_input.encode('utf-8')
+                decrypted_text = decrypt_message(revealed_text.encode('utf-8'), key_bytes)
+                if decrypted_text:
+                    st.subheader("Decoded and Decrypted Text:")
+                    st.write(decrypted_text)
+                else:
+                    st.error("Decryption failed. Ensure the key is correct.")
+            except Exception as e:
+                st.error(f"Decryption error: {str(e)}")
+        else:
+            st.subheader("Decoded Text:")
+            st.write(revealed_text)
+
+st.title('Stealthify - Steganography Tool')
+st.sidebar.markdown('---')
+st.sidebar.title('Dashboard Options')
+option = st.sidebar.radio("Choose an action:", ("Encode", "Decode"), index=0, on_change=clear_state)
+st.sidebar.markdown('---')
 
 
 if option == "Encode":
