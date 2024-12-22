@@ -47,6 +47,24 @@ def decrypt_message(encrypted_message, key):
     except Exception as e:
         st.error("Failed to decrypt. Ensure the key is correct and the message was encrypted.")
         return None
+    
+def display_home():
+    st.header("Welcome to Stealthify!")    
+    
+    st.write("""
+    Stealthify leverages the art of steganography to securely embed text within images. Ideal for encrypting and decrypting secret messages, this tool offers robust options for digital communication and security.
+    """)
+
+    st.write("""
+    **Features:**
+    - **Encoding**
+    - **Decoding**
+    - **Encryption**
+    - **Decryption**
+    """)
+    
+    st.write("Get started by selecting either **Encode** or **Decode** from the sidebar menu. Dive into the world of digital steganography and secure communication!")
+
 
 def encode_text():
     st.subheader('Encode')
@@ -124,11 +142,13 @@ def decode_text():
 st.title('Stealthify - Steganography Tool')
 st.sidebar.markdown('---')
 st.sidebar.title('Dashboard Options')
-option = st.sidebar.radio("Choose an action:", ("Encode", "Decode"), index=0, on_change=clear_state)
+option = st.sidebar.radio("Choose an action:", ("Home", "Encode", "Decode"), index=0, on_change=clear_state)
 st.sidebar.markdown('---')
 
 
-if option == "Encode":
+if option == "Home":
+    display_home()
+elif option == "Encode":
     encode_text()
 elif option == "Decode":
     decode_text()
