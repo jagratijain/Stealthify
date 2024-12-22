@@ -29,7 +29,7 @@ def save_image(image):
 
 def display_image(image_data, caption="Image"):
     if image_data:
-        st.image(image_data, caption=caption, use_column_width=True)
+        st.image(image_data, caption=caption, use_container_width=True)
 
 def generate_key():
     return Fernet.generate_key()
