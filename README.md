@@ -20,18 +20,26 @@ You'll need to have Python installed on your computer.
 ### Installation
 
 1. Clone the repo
+```bash
 git clone https://github.com/jagratijain/Stealthify.git
+```
 
 2. Navigate to the project directory
+```bash
 cd Stealthify
+```
 
 3. Install the required packages
+```bash
 pip install -r requirements.txt
+```
 
 ### Running the Application
 
 To run the application, use the following command in the terminal:
+```bash
 streamlit run main.py
+```
 
 This will start the server, and you should be able to access the web interface by navigating to `localhost:8501` in your web browser.
 
