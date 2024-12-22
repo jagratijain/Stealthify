@@ -52,7 +52,7 @@ def display_home():
     st.header("Welcome to Stealthify!")    
     
     st.write("""
-    Stealthify leverages the art of steganography to securely embed text within images. Ideal for encrypting and decrypting secret messages, this tool offers robust options for digital communication and security.
+    Stealthify allows you to securely to securely embed text within images using steganography techniques. Ideal for encrypting and decrypting secret messages, this tool offers robust options for digital communication and security.
     """)
 
     st.write("""
@@ -63,7 +63,32 @@ def display_home():
     - **Decryption**
     """)
     
-    st.write("Get started by selecting either **Encode** or **Decode** from the sidebar menu. Dive into the world of digital steganography and secure communication!")
+    st.write("Start by choosing Encode to hide a message, or Decode to reveal one, from the menu on the side. Explore how you can keep your messages safe and private!")
+
+def display_about():
+    st.header("About Stealthify")
+
+    st.markdown("""
+    Stealthify is designed to secure digital communications by embedding text invisibly within images. 
+    This tool provides an intuitive interface for encoding, decoding, encrypting, and decrypting hidden messages, making it ideal for maintaining privacy in your interactions.
+
+    **Core Features:**
+
+    - **Encode:** Embed text within images invisibly, with an option to encrypt the text for additional security.
+    - **Decode:** Retrieve hidden messages from images, with tools to decrypt content if it has been secured.
+    - **Encrypt:** Use advanced cryptographic techniques to secure messages, ensuring they can only be accessed by those with the correct decryption key.
+    - **Decrypt:** Safely decrypt received messages, ensuring complete privacy and security.
+
+    Stealthify ensures that your communications remain confidential and secure. Whether you're a professional looking for secure ways to transmit sensitive information, or simply curious about digital privacy, Stealthify provides the tools you need.
+
+    **Technologies Used:**
+    - **Python:** For robust and flexible programming.
+    - **Streamlit:** For creating an intuitive, interactive user interface.
+    - **Cryptography:** Ensures secure encryption and decryption of messages.
+    - **Stegano library:** A powerful library for steganographic encoding and decoding.
+
+    Developed by Jagrati Jain.
+    """)
 
 
 def encode_text():
@@ -142,12 +167,14 @@ def decode_text():
 st.title('Stealthify - Steganography Tool')
 st.sidebar.markdown('---')
 st.sidebar.title('Dashboard Options')
-option = st.sidebar.radio("Choose an action:", ("Home", "Encode", "Decode"), index=0, on_change=clear_state)
+option = st.sidebar.radio("Choose an action:", ("Home", "About", "Encode", "Decode"), index=0, on_change=clear_state)
 st.sidebar.markdown('---')
 
 
 if option == "Home":
     display_home()
+elif option == "About":
+    display_about()
 elif option == "Encode":
     encode_text()
 elif option == "Decode":
